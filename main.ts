@@ -10,7 +10,7 @@ import { KAFKA_CLIENT_CONFIG } from './src/config/kafka';
 import { SERVICE_NAME } from './src/constants/common';
 import { ConnectorAliasServiceModule } from './src/connector-alias-service.module';
 
-const logger = new Logger({ context: 'Bonding Service' });
+const logger = new Logger({ context: 'Connector Alias Service' });
 
 async function bootstrap() {
   const app = await NestFactory.create(ConnectorAliasServiceModule);

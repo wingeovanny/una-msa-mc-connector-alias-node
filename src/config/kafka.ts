@@ -17,7 +17,7 @@ export const KAFKA_CLIENT_CONFIG: KafkaOptions = {
         : {}),
     },
     consumer: {
-      groupId: 'notification-trx-pts-merchant-group',
+      groupId: '',
     },
   },
 };

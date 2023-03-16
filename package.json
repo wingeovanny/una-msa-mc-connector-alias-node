@@ -11,10 +11,10 @@
     "start:dev:windows": "set LOCAL=true && nest start",
     "test:coverage": "jest --coverage  --forceExit",
     "typeorm": "node --conditions=typescript -r ts-node/register node_modules/typeorm/cli.js",
-    "typeorm:migrate:local": "LOCAL=true npm run typeorm -- migration:run -c bo-mc-notification",
-    "typeorm:revert:local": "LOCAL=true npm run typeorm -- migration:revert -c bo-mc-notification",
-    "typeorm:generate:local": "LOCAL=true npm run typeorm -- migration:generate  -c bo-mc-notification -n ",
-    "seed": "ts-node node_modules/typeorm-seeding/dist/cli.js seed -c bo-mc-notification",
+    "typeorm:migrate:local": "LOCAL=true npm run typeorm -- migration:run -c bo-mc-connector-alias-db",
+    "typeorm:revert:local": "LOCAL=true npm run typeorm -- migration:revert -c bo-mc-connector-alias-db",
+    "typeorm:generate:local": "LOCAL=true npm run typeorm -- migration:generate  -c bo-mc-connector-alias-db -n ",
+    "seed": "ts-node node_modules/typeorm-seeding/dist/cli.js seed -c bo-mc-connector-alias-db",
     "build": "nest build && copyfiles .env* ./dist/"
   },
   "dependencies": {

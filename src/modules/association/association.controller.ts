@@ -8,18 +8,20 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { SERVICE_NAME } from '../../constants/common';
 import { AssociationService } from './association.service';
-import { AssociationQrDto } from './dto/association.dto';
+import {
+  AssociationQrMerchantDto,
+  AssociationQrPersonDto,
+} from './dto/association.dto';
 
-@ApiTags(SERVICE_NAME)
+@ApiTags('association QR')
 @Controller('association')
 export class AssociationController {
   constructor(
     private logger: Logger,
     private associationService: AssociationService,
   ) {}
-  @Post()
+  @Post('person')
   @ApiBadRequestResponse({
     description: INVALID_PAYLOAD_ERROR,
   })
@@ -27,11 +29,29 @@ export class AssociationController {
     description: 'Internal server error',
   })
   @ApiOperation({
-    summary: 'associates an orphaned qr to a client type person or business',
+    summary: 'associates an orphaned qr to a client type person',
   })
-  @ApiBody({ type: AssociationQrDto })
-  async associateQr(@Body() associationQrDto: AssociationQrDto) {
-    this.logger.log(`create Alias qr for given body`, null);
-    return this.associationService.associateQr(associationQrDto);
+  @ApiBody({ type: AssociationQrPersonDto })
+  async associateQrPerson(@Body() associationQrDto: AssociationQrPersonDto) {
+    this.logger.log(`association Alias by person qr for given body`, null);
+    return this.associationService.associatePersonQr(associationQrDto);
+  }
+
+  @Post('merchant')
+  @ApiBadRequestResponse({
+    description: INVALID_PAYLOAD_ERROR,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  @ApiOperation({
+    summary: 'associates an orphaned qr to a client type business',
+  })
+  @ApiBody({ type: AssociationQrMerchantDto })
+  async associateQrMerchant(
+    @Body() associationQrDto: AssociationQrMerchantDto,
+  ) {
+    this.logger.log(`association Alias by merchant qr for given body`, null);
+    return this.associationService.associateMerchantQr(associationQrDto);
   }
 }

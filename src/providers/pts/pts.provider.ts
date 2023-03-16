@@ -2,7 +2,6 @@ import { Logger } from '@deuna/node-logger-lib';
 import { CACHE_MANAGER, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { HttpService } from '@nestjs/axios';
-import { PaymentChannelResponse, TokenPts } from './pts.dto';
 import axios from 'axios';
 import qs from 'qs';
 import { lastValueFrom, retry } from 'rxjs';
@@ -26,6 +25,7 @@ import {
   ErrorObjectType,
 } from '@deuna/node-shared-lib';
 import { transformCapitalize } from '../../utils/commons';
+import { TokenPts, ResponseClient } from './dto/pts.dto';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const objectMapper = require('object-mapper');
@@ -93,10 +93,10 @@ export class PTSProvider {
   }
 
   async getClient(
-    identifier: string,
     type: GetByType,
+    identifier: string,
     trackingId: string,
-  ): Promise<PaymentChannelResponse> {
+  ): Promise<ResponseClient> {
     const authToken = await this.generatePtsAuthToken(trackingId);
 
     this.logger.log(`Getting PTS account info for ${identifier}`, trackingId);
