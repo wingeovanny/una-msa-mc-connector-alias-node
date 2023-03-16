@@ -8,12 +8,12 @@ import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 
 import { KAFKA_CLIENT_CONFIG } from './src/config/kafka';
 import { SERVICE_NAME } from './src/constants/common';
-import { BondingServiceModule } from './src/bonding-service.module';
+import { ConnectorAliasServiceModule } from './src/connector-alias-service.module';
 
 const logger = new Logger({ context: 'Bonding Service' });
 
 async function bootstrap() {
-  const app = await NestFactory.create(BondingServiceModule);
+  const app = await NestFactory.create(ConnectorAliasServiceModule);
   if (process.env.ENABLE_AUDIT === 'true') {
     app.useGlobalInterceptors(new AuditInterceptor(SERVICE_NAME));
   }
