@@ -8,7 +8,7 @@ import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 
 import { KAFKA_CLIENT_CONFIG } from './src/config/kafka';
 import { SERVICE_NAME } from './src/constants/common';
-import { BondingServiceModule } from 'src/bonding-service.module';
+import { BondingServiceModule } from './src/bonding-service.module';
 
 const logger = new Logger({ context: 'Bonding Service' });
 
