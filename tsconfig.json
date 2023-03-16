@@ -1,0 +1,11 @@
+{
+  "extends": "@tsconfig/node14",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist",
+    "strict": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+  },
+  "references": []
+}
