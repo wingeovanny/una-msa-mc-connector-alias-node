@@ -8,3 +8,20 @@ export interface Hierarchy {
   updatedAt: string;
   updatedBy: null;
 }
+
+export interface ParamsNodeByClientId {
+  clientId: string;
+  nodeType: string;
+}
+
+export interface IBranchNode {
+  clientId: string;
+  nodeType: string;
+  parent?: string;
+}
+
+export interface IBoxNode {
+  id: number;
+  quantity: number;
+  nodeType: string;
+}

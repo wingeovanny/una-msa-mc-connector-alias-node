@@ -1,6 +1,7 @@
 import { Logger } from '@deuna/node-logger-lib';
 import { INVALID_PAYLOAD_ERROR } from '@deuna/node-shared-lib';
 import { Body, Controller, Post } from '@nestjs/common';
+import { ErrorCustomizer } from '../../utils/customize-error';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -20,6 +21,7 @@ export class AssociationController {
   constructor(
     private logger: Logger,
     private associationService: AssociationService,
+    private readonly errorCustomizer: ErrorCustomizer,
   ) {}
   @Post('person')
   @ApiBadRequestResponse({

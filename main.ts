@@ -6,7 +6,6 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@deuna/node-logger-lib';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 
-import { KAFKA_CLIENT_CONFIG } from './src/config/kafka';
 import { SERVICE_NAME } from './src/constants/common';
 import { ConnectorAliasServiceModule } from './src/connector-alias-service.module';
 
@@ -19,7 +18,6 @@ async function bootstrap() {
   }
   app.useGlobalPipes(new ValidationPipe());
   app.useLogger(app.get(Logger));
-  app.connectMicroservice(KAFKA_CLIENT_CONFIG);
 
   await app.startAllMicroservices();
   registerSwagger(app, SERVICE_NAME);

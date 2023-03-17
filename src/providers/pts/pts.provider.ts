@@ -5,7 +5,7 @@ import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 import qs from 'qs';
 import { lastValueFrom, retry } from 'rxjs';
-import { clientResponse } from './constants/schema';
+
 import {
   PTS_BASE_URL,
   CHANEL_ID,
@@ -26,6 +26,7 @@ import {
 } from '@deuna/node-shared-lib';
 import { transformCapitalize } from '../../utils/commons';
 import { TokenPts, ResponseClient } from './dto/pts.dto';
+import { clientSchema } from './constants/schema';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const objectMapper = require('object-mapper');
@@ -151,6 +152,6 @@ export class PTSProvider {
 
     this.logger.log(`Obtained PTS account info for ${identifier}`, trackingId);
 
-    return objectMapper(accountInfoModify, clientResponse);
+    return objectMapper(accountInfoModify, clientSchema);
   }
 }
