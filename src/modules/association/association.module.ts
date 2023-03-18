@@ -7,12 +7,16 @@ import { HierarchyModule } from '../../providers/hierarchy/hierarchy.module';
 import { AssociationController } from './association.controller';
 import { AssociationService } from './association.service';
 import { ErrorCustomizer } from '../../utils/customize-error';
+import { ConfigurationModule } from '../../providers/configuration/configuration.module';
+import { CampaingModule } from '../../providers/campaing/campaing.module';
 
 @Module({
   imports: [
-    ClientModule,
-    HierarchyModule,
     AliasModule,
+    CampaingModule,
+    ClientModule,
+    ConfigurationModule,
+    HierarchyModule,
     PTSModule,
     LoggerModule.forRoot({ context: 'Association Module' }),
   ],

@@ -4,7 +4,8 @@ import { ENDPOINTS } from './constants/api';
 import { HttpService } from '@nestjs/axios';
 import {
   Hierarchy,
-  IHierarchy,
+  IBoxNode,
+  IBranchNode,
   ParamsNodeByClientId,
 } from './interfaces/hierarchy';
 import { CustomException } from '@deuna/node-shared-lib';
@@ -31,19 +32,44 @@ export class HierarchyProvider {
           {},
         ),
       );
+      console.log('CONSULTA DE NOMO MERCHANT: ', response);
       return response;
     } catch (e) {
       throw new CustomException(e, null);
     }
   }
 
-  async createNodeBranch(hierarchy: IHierarchy): Promise<Hierarchy[]> {
+  async createNodeBranch(branchNode: IBranchNode): Promise<Hierarchy> {
     try {
       //const nodeIdbranch = res.data.createNodeHierachy.id;
       const { data: response } = await lastValueFrom(
         this.httpService.post(
           `${process.env.bo_mc_hierarchy_service}/hierarchy`,
-          hierarchy,
+          branchNode,
+          {
+            headers: {
+              username: 'AssociationModule',
+            },
+          },
+        ),
+      );
+      return response;
+    } catch (e) {
+      throw new CustomException(e, null);
+    }
+  }
+
+  async createBoxNode(boxNode: IBoxNode) {
+    try {
+      //const nodeIdbranch = res.data.createNodeHierachy.id;
+      const { id, quantity, nodeType } = boxNode;
+      const { data: response } = await lastValueFrom(
+        this.httpService.post(
+          `${process.env.bo_mc_hierarchy_service}/hierarchy/${id}/childrens`,
+          {
+            quantity,
+            nodeType,
+          },
           {
             headers: {
               username: 'AssociationModule',

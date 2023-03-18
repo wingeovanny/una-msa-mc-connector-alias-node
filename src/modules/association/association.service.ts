@@ -1,6 +1,12 @@
+import { ConfigurationProvider } from './../../providers/configuration/configuration.provider';
 import {
-  IHierarchy,
+  Campaign,
+  StatusCampain,
+} from './../../providers/campaing/interfaces/campaing';
+import { CampaingProvider } from './../../providers/campaing/campaing.provider';
+import {
   ParamsNodeByClientId,
+  IBranchNode,
 } from './../../providers/hierarchy/interfaces/hierarchy';
 import { ResponseClient } from './../../providers/pts/dto/pts.dto';
 import { PTSProvider } from './../../providers/pts/pts.provider';
@@ -41,9 +47,11 @@ const errors: ErrorObjectType[] = [
 @Injectable()
 export class AssociationService {
   constructor(
-    private providerClient: ClientProvider,
-    private providerHierarchy: HierarchyProvider,
     private providerAias: AliasProvider,
+    private providerCampaing: CampaingProvider,
+    private providerClient: ClientProvider,
+    private readonly providerConfiguration: ConfigurationProvider,
+    private providerHierarchy: HierarchyProvider,
     private providerPts: PTSProvider,
   ) {}
 
@@ -56,54 +64,65 @@ export class AssociationService {
       // promisePts,
       promiseClient,
     ]);
-    const getNodeMerchant: ParamsNodeByClientId = {
-      clientId: resultClientMerchant.id,
-      nodeType: 'M',
-    };
-    if (!this.validateAssociation) {
-      const parent = await this.providerHierarchy.getNodeMerchant(
+    const resultCampaing = await this.providerCampaing.getCampainById(
+      resultAlias.origin,
+    );
+
+    if (this.validateAssociation(resultAlias, resultCampaing)) {
+      const getNodeMerchant: ParamsNodeByClientId = {
+        clientId: resultClientMerchant.id,
+        nodeType: 'M',
+      };
+      const parentIdNode = await this.providerHierarchy.getNodeMerchant(
         getNodeMerchant,
       );
-      console.log('Se consuilta el nodo del MERCHANT: ', parent);
-      const branchCreate: IHierarchy = {
+      console.log('Se consuilta el nodo del MERCHANT: ', parentIdNode);
+
+      const branchNodeCreate: IBranchNode = {
         clientId: resultClientMerchant.id,
         nodeType: 'S',
-        parent: parent.toString(),
+        parent: parentIdNode.toString(),
       };
+
       //const nodeIdbranch = res.data.createNodeHierachy.id;
       const idNodeBranch = await this.providerHierarchy.createNodeBranch(
-        branchCreate,
+        branchNodeCreate,
       );
-      console.log('Creado node de branch', idNodeBranch);
-    }
 
-    return 'OK';
-    const updateAlias = {
-      ...resultAlias,
-      metadata: {
-        ...resultAlias.metadata,
-        accountNumber: '12345678', //resultPts.documentNumber,
-        accountDestination: 'MAMBU1',
-      },
-      accountType: AccountType.MERCHANT,
-      status: StatusAlias.ACTIVE,
-    };
+      console.log('Creado node de branch', idNodeBranch.id);
 
-    delete updateAlias.requirementId;
-    const result = await this.associateQr(associationData.idQr, updateAlias);
-    console.log('Response...', result);
-  }
+      const createConfigBranch =
+        await this.providerConfiguration.createConfigurationBranch(
+          idNodeBranch.id,
+          parentIdNode[0].id,
+          resultCampaing.name,
+        );
 
-  validateAssociation(dataAlias: Alias): boolean {
-    if (
-      Object.keys(dataAlias.metadata).length === 0 ||
-      !dataAlias.metadata.hasOwnProperty('accountNumber')
-    ) {
-      // Si metadata está vacío o no tiene la propiedad accountNumber
-      return false;
+      console.log(createConfigBranch);
+      return 'OK';
+      const updateAlias = {
+        ...resultAlias,
+        metadata: {
+          ...resultAlias.metadata,
+          accountNumber: '12345678', //resultPts.documentNumber,
+          accountDestination: 'MAMBU1',
+        },
+        accountType: AccountType.MERCHANT,
+        status: StatusAlias.ACTIVE,
+      };
+
+      delete updateAlias.requirementId;
+      const result = await this.associateQr(associationData.idQr, updateAlias);
+      console.log('Response...', result);
+      return {
+        status: true,
+        message: `This IdQr get association: ${associationData.idQr}`,
+      };
     } else {
-      // Si metadata tiene la propiedad accountNumber
-      return true;
+      return {
+        status: false,
+        message: `This IdQr not get association, because of association ${associationData.idQr}`,
+      };
     }
   }
 
@@ -133,13 +152,29 @@ export class AssociationService {
 
     delete updateAlias.requirementId;
     const result = await this.associateQr(associationData.idQr, updateAlias);
-    console.log('Response...', result);
+    if (result.status) {
+      console.log('Response...', result);
+      return {
+        status: true,
+        message: `This IdQr has been associated ${associationData.idQr}`,
+      };
+    } else {
+      throw new EntityDoesNotExistException(errors);
+    }
   }
 
   associateQr(idQr: string, dataUpdate: Alias) {
     return this.providerAias.associationQR(idQr, dataUpdate, idQr);
   }
 
+  validateAssociation(dataAlias: Alias, dataCampaing: Campaign): boolean {
+    if (
+      dataAlias.status === StatusAlias.ACTIVE &&
+      dataCampaing.status === StatusCampain.ACTIVE
+    ) {
+      return true;
+    }
+  }
   async getAliasById(idAlias: string) {
     const resultAlias: Alias = await this.providerAias.getAliasbyId(idAlias);
     if (!resultAlias) {
