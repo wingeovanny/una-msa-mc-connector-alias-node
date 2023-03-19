@@ -1,12 +1,12 @@
 export class Alias {
   requirementId: string;
   secondId: string;
-  parentId: string;
   metadata: Record<string, unknown>;
   status: StatusAlias;
   origin: string;
   aliasType: string;
   accountType: AccountType;
+  parentId: string;
 }
 
 export enum AccountType {

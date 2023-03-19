@@ -7,6 +7,7 @@ import {
   IBoxNode,
   IBranchNode,
   ParamsNodeByClientId,
+  ResponseBox,
 } from './interfaces/hierarchy';
 import { CustomException } from '@deuna/node-shared-lib';
 
@@ -59,7 +60,7 @@ export class HierarchyProvider {
     }
   }
 
-  async createNodeBox(boxNode: IBoxNode) {
+  async createNodeBox(boxNode: IBoxNode): Promise<ResponseBox> {
     try {
       //const nodeIdbranch = res.data.createNodeHierachy.id;
       const { id, quantity, nodeType } = boxNode;

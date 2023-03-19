@@ -33,3 +33,19 @@ export enum TypeHierarchy {
   BRANCH = 'S',
   BOX = 'C',
 }
+
+export interface QR {
+  metadata: any;
+  origin: any;
+  parentId: number;
+  accountType: string;
+  status: string;
+  type: string;
+}
+
+// Define una interfaz para el objeto de respuesta que contiene una propiedad "qrs" que es un arreglo de objetos QR
+export interface ResponseBox {
+  status: boolean;
+  qrs: QR[];
+  message: string;
+}

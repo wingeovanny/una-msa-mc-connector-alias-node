@@ -1,4 +1,4 @@
-import { ConfigurationsDto, CreateConfigDto } from './interfaces/configuration';
+import { Configuration, CreateConfigDto } from './interfaces/configuration';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
@@ -18,22 +18,13 @@ export class ConfigurationProvider {
       'CN004',
     );
 
-    console.log('config CN004 MERCHANT CONFIG PROVIDER::: ', configMerchant);
     const configBranchData = await this.setDataConfigBranch(
       nodeIdBranch,
       campainName,
       configMerchant,
     );
-    const test = configBranchData.configurations.find(
-      (e) => e.configName === 'CN008',
-    );
-    console.log('TESTTTTTT:', test);
-    console.log('DATA SETEATDA configBranchData', configBranchData);
-    const createdConfig = await this.createConfigurationBranchApi(
-      configBranchData,
-    );
-    console.log(configBranchData);
-    console.log(createdConfig);
+
+    await this.createConfigurationBranchApi(configBranchData);
   }
 
   async getConfigByOneNodeId(
@@ -50,16 +41,14 @@ export class ConfigurationProvider {
   }
 
   async createConfigurationBranchApi(
-    createConfig: ConfigurationsDto,
-  ): Promise<CreateConfigDto[]> {
-    console.log('createConfigurationBranchApi', createConfig);
+    createConfig: any,
+  ): Promise<Configuration[]> {
     const { data: response } = await lastValueFrom(
       this.httpService.post(
         `${process.env.bo_mc_configuration_service}${endpoints.CONFIG}/all`,
         { configurations: createConfig },
       ),
     );
-    console.log('adasdasdasdasdasqwqeqweq,m,mkmolmkkn');
     return response;
   }
 
@@ -67,18 +56,12 @@ export class ConfigurationProvider {
     idNodeBranch: string,
     nameBranch: string,
     dataMerchant: CreateConfigDto,
-  ): Promise<ConfigurationsDto> {
-    console.log('setDataConfigBranch', dataMerchant);
-    const configurationBranchs: ConfigurationsDto = { configurations: [] };
-    configurationBranchs.configurations.push(
-      this.createDataCN007(idNodeBranch, nameBranch),
-    );
-    configurationBranchs.configurations.push(
-      this.createDataCN008(idNodeBranch, dataMerchant),
-    );
-    configurationBranchs.configurations.push(
-      this.createDataCN009(idNodeBranch),
-    );
+  ) {
+    const configurationBranchs: any = [];
+    configurationBranchs.push(this.createDataCN007(idNodeBranch, nameBranch));
+
+    configurationBranchs.push(this.createDataCN008(idNodeBranch, dataMerchant));
+    configurationBranchs.push(this.createDataCN009(idNodeBranch));
     return configurationBranchs;
   }
 
@@ -89,7 +72,7 @@ export class ConfigurationProvider {
       nodeId,
       configData: {
         branchName: nameBranch,
-        numberBox: 0,
+        numberBox: '1',
       },
     };
   }
@@ -98,7 +81,7 @@ export class ConfigurationProvider {
     nodeId: string,
     dataMerchant: CreateConfigDto,
   ): CreateConfigDto {
-    delete dataMerchant.id;
+    // delete dataMerchant.id;
     const dataConfig = {
       ...dataMerchant,
       nodeId: nodeId,

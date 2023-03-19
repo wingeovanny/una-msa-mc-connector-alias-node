@@ -9,6 +9,7 @@ import {
   IBranchNode,
   TypeHierarchy,
   IBoxNode,
+  ResponseBox,
 } from './../../providers/hierarchy/interfaces/hierarchy';
 import { ResponseClient } from './../../providers/pts/dto/pts.dto';
 import { PTSProvider } from './../../providers/pts/pts.provider';
@@ -58,74 +59,66 @@ export class AssociationService {
   ) {}
 
   async associateMerchantQr(associationData: AssociationQrMerchantDto) {
-    console.log('AQUI100');
     const promiseAlias = await this.getAliasById(associationData.idQr);
-    console.log('AQUI1000');
     const promiseClient = await this.getClientByRuc(
       associationData.identification,
     );
     //consultamos info de alias y de merchant
-    console.log('AQUI10000');
     const [resultAlias, clientMerchant] = await Promise.all([
       promiseAlias,
       promiseClient,
     ]);
 
     //consultamos info de campaña
-    console.log('AQUI2');
     const resultCampaing = await this.providerCampaing.getCampainById(
       resultAlias.origin,
     );
-    console.log('AQUI31');
     //validamos que la campaña este activa
     if (this.isValidAssociation(resultAlias, resultCampaing)) {
       const getNodeBranch: ParamsNodeByClientId = {
         clientId: clientMerchant.id,
         nodeType: TypeHierarchy.BRANCH,
       };
-      console.log('AQUI2');
+
       //consultamos las jerarquias/nodos de las sucursales del Merchant
       const hierarchyBranch =
         await this.providerHierarchy.getNodeHierarchyByType(getNodeBranch);
-      console.log('AQUI3');
+
       //filtramos la sucursal creada por el id de campaña
       const idBranchByCampain = hierarchyBranch.find(
         (node) =>
           node.clientId === clientMerchant.id &&
           node.origin === resultCampaing.id,
       );
-      console.log('AQUI14');
-      let idNodeBranch = '';
+
+      let idNodeBranch = idBranchByCampain?.id;
       // si no existe creamos la sucursal
       if (!idBranchByCampain) {
         const getNodeMerchant: ParamsNodeByClientId = {
           clientId: clientMerchant.id,
           nodeType: TypeHierarchy.MERCHANT,
         };
-        console.log('AQUI15');
+
         //consultamos info del nodo del merchant
         const parentNode = await this.providerHierarchy.getNodeHierarchyByType(
           getNodeMerchant,
         );
-        console.log('AQUI16');
+
         const idNodeMerchant = parentNode.find((node) => node);
-        console.log('Se consuilta el nodo del MERCHANT: ', parentNode);
-        console.log('AQUI17');
         const branchNodeCreate: IBranchNode = {
           clientId: clientMerchant.id,
           nodeType: TypeHierarchy.BRANCH,
           parent: idNodeMerchant.id,
           origin: resultCampaing.id,
         };
-        console.log('18');
+
         //const nodeIdbranch = res.data.createNodeHierachy.id;
         const createrNodeBranch = await this.providerHierarchy.createNodeBranch(
           branchNodeCreate,
         );
-        console.log('Creado node de branch', createrNodeBranch);
         idNodeBranch = createrNodeBranch.id;
         //con el id del node de la sucursal creamos la configuracion de la sucursal
-        console.log('19');
+
         const createConfigBranch =
           await this.providerConfiguration.createConfigurationBranch(
             idNodeBranch,
@@ -134,15 +127,15 @@ export class AssociationService {
           );
         console.log('SE CREO POR FIN... ', createConfigBranch);
       }
-      console.log('111');
+      console.log('01edwib');
       //creamos el nodo para cada caja
       const boxData: IBoxNode = {
         id: +idNodeBranch,
         quantity: 1,
         nodeType: TypeHierarchy.BOX,
       };
-      console.log('122');
-      const dataCreateBox = await this.providerHierarchy.createNodeBox(boxData);
+      const dataCreateBox: ResponseBox =
+        await this.providerHierarchy.createNodeBox(boxData);
       console.log('Resultado de crear BOOOOOOOX', dataCreateBox);
       if (dataCreateBox) {
         console.log('133');
@@ -150,12 +143,12 @@ export class AssociationService {
           ...resultAlias,
           metadata: {
             ...resultAlias.metadata,
-            accountNumber: '987654321', //resultPts.documentNumber,
-            accountDestination: 'MAMBU1MERCHANT',
+            accountNumber: clientMerchant.clientAcountId, //resultPts.documentNumber,
+            accountDestination: 'MAMBU1',
           },
           accountType: AccountType.MERCHANT,
           status: StatusAlias.ACTIVE,
-          parentId: dataCreateBox.parentId,
+          parentId: dataCreateBox.qrs[0].parentId.toString(),
         };
 
         delete updateAlias.requirementId;
@@ -175,7 +168,6 @@ export class AssociationService {
         } else {
           throw new EntityDoesNotExistException(errors);
         }
-        console.log('Response... QR ASOCIADOOO:::: ', result);
       }
     } else {
       return {
@@ -234,7 +226,7 @@ export class AssociationService {
       dataCampaing.status === StatusCampain.ACTIVE
     );
   }
-  async getAliasById(idAlias: string) {
+  async getAliasById(idAlias: string): Promise<Alias> {
     const resultAlias: Alias = await this.providerAias.getAliasbyId(idAlias);
     if (!resultAlias) {
       throw new EntityDoesNotExistException(errors);
