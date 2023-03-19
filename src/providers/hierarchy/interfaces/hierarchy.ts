@@ -7,21 +7,29 @@ export interface Hierarchy {
   createdBy: string;
   updatedAt: string;
   updatedBy: null;
+  origin?: string;
 }
 
 export interface ParamsNodeByClientId {
   clientId: string;
-  nodeType: string;
+  nodeType: TypeHierarchy;
 }
 
 export interface IBranchNode {
   clientId: string;
-  nodeType: string;
+  nodeType: TypeHierarchy;
   parent?: string;
+  origin?: string;
 }
 
 export interface IBoxNode {
   id: number;
   quantity: number;
-  nodeType: string;
+  nodeType: TypeHierarchy;
+}
+
+export enum TypeHierarchy {
+  MERCHANT = 'M',
+  BRANCH = 'S',
+  BOX = 'C',
 }

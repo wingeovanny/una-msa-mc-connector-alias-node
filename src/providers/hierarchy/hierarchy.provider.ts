@@ -22,7 +22,7 @@ export class HierarchyProvider {
     return response;
   }
 
-  async getNodeMerchant(
+  async getNodeHierarchyByType(
     getNodeByClientId: ParamsNodeByClientId,
   ): Promise<Hierarchy[]> {
     try {
@@ -59,7 +59,7 @@ export class HierarchyProvider {
     }
   }
 
-  async createBoxNode(boxNode: IBoxNode) {
+  async createNodeBox(boxNode: IBoxNode) {
     try {
       //const nodeIdbranch = res.data.createNodeHierachy.id;
       const { id, quantity, nodeType } = boxNode;

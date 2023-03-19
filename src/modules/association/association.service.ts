@@ -7,6 +7,8 @@ import { CampaingProvider } from './../../providers/campaing/campaing.provider';
 import {
   ParamsNodeByClientId,
   IBranchNode,
+  TypeHierarchy,
+  IBoxNode,
 } from './../../providers/hierarchy/interfaces/hierarchy';
 import { ResponseClient } from './../../providers/pts/dto/pts.dto';
 import { PTSProvider } from './../../providers/pts/pts.provider';
@@ -56,68 +58,125 @@ export class AssociationService {
   ) {}
 
   async associateMerchantQr(associationData: AssociationQrMerchantDto) {
-    const promiseAlias = this.getAliasById(associationData.idQr);
-    const promiseClient = this.getClientByRuc(associationData.identification);
-
-    const [resultAlias, resultClientMerchant] = await Promise.all([
+    console.log('AQUI100');
+    const promiseAlias = await this.getAliasById(associationData.idQr);
+    console.log('AQUI1000');
+    const promiseClient = await this.getClientByRuc(
+      associationData.identification,
+    );
+    //consultamos info de alias y de merchant
+    console.log('AQUI10000');
+    const [resultAlias, clientMerchant] = await Promise.all([
       promiseAlias,
-      // promisePts,
       promiseClient,
     ]);
+
+    //consultamos info de campaña
+    console.log('AQUI2');
     const resultCampaing = await this.providerCampaing.getCampainById(
       resultAlias.origin,
     );
-
-    if (this.validateAssociation(resultAlias, resultCampaing)) {
-      const getNodeMerchant: ParamsNodeByClientId = {
-        clientId: resultClientMerchant.id,
-        nodeType: 'M',
+    console.log('AQUI31');
+    //validamos que la campaña este activa
+    if (this.isValidAssociation(resultAlias, resultCampaing)) {
+      const getNodeBranch: ParamsNodeByClientId = {
+        clientId: clientMerchant.id,
+        nodeType: TypeHierarchy.BRANCH,
       };
-      const parentIdNode = await this.providerHierarchy.getNodeMerchant(
-        getNodeMerchant,
+      console.log('AQUI2');
+      //consultamos las jerarquias/nodos de las sucursales del Merchant
+      const hierarchyBranch =
+        await this.providerHierarchy.getNodeHierarchyByType(getNodeBranch);
+      console.log('AQUI3');
+      //filtramos la sucursal creada por el id de campaña
+      const idBranchByCampain = hierarchyBranch.find(
+        (node) =>
+          node.clientId === clientMerchant.id &&
+          node.origin === resultCampaing.id,
       );
-      console.log('Se consuilta el nodo del MERCHANT: ', parentIdNode);
-
-      const branchNodeCreate: IBranchNode = {
-        clientId: resultClientMerchant.id,
-        nodeType: 'S',
-        parent: parentIdNode.toString(),
-      };
-
-      //const nodeIdbranch = res.data.createNodeHierachy.id;
-      const idNodeBranch = await this.providerHierarchy.createNodeBranch(
-        branchNodeCreate,
-      );
-
-      console.log('Creado node de branch', idNodeBranch.id);
-
-      const createConfigBranch =
-        await this.providerConfiguration.createConfigurationBranch(
-          idNodeBranch.id,
-          parentIdNode[0].id,
-          resultCampaing.name,
+      console.log('AQUI14');
+      let idNodeBranch = '';
+      // si no existe creamos la sucursal
+      if (!idBranchByCampain) {
+        const getNodeMerchant: ParamsNodeByClientId = {
+          clientId: clientMerchant.id,
+          nodeType: TypeHierarchy.MERCHANT,
+        };
+        console.log('AQUI15');
+        //consultamos info del nodo del merchant
+        const parentNode = await this.providerHierarchy.getNodeHierarchyByType(
+          getNodeMerchant,
         );
-
-      console.log(createConfigBranch);
-      return 'OK';
-      const updateAlias = {
-        ...resultAlias,
-        metadata: {
-          ...resultAlias.metadata,
-          accountNumber: '12345678', //resultPts.documentNumber,
-          accountDestination: 'MAMBU1',
-        },
-        accountType: AccountType.MERCHANT,
-        status: StatusAlias.ACTIVE,
+        console.log('AQUI16');
+        const idNodeMerchant = parentNode.find((node) => node);
+        console.log('Se consuilta el nodo del MERCHANT: ', parentNode);
+        console.log('AQUI17');
+        const branchNodeCreate: IBranchNode = {
+          clientId: clientMerchant.id,
+          nodeType: TypeHierarchy.BRANCH,
+          parent: idNodeMerchant.id,
+          origin: resultCampaing.id,
+        };
+        console.log('18');
+        //const nodeIdbranch = res.data.createNodeHierachy.id;
+        const createrNodeBranch = await this.providerHierarchy.createNodeBranch(
+          branchNodeCreate,
+        );
+        console.log('Creado node de branch', createrNodeBranch);
+        idNodeBranch = createrNodeBranch.id;
+        //con el id del node de la sucursal creamos la configuracion de la sucursal
+        console.log('19');
+        const createConfigBranch =
+          await this.providerConfiguration.createConfigurationBranch(
+            idNodeBranch,
+            idNodeMerchant.id,
+            resultCampaing.name,
+          );
+        console.log('SE CREO POR FIN... ', createConfigBranch);
+      }
+      console.log('111');
+      //creamos el nodo para cada caja
+      const boxData: IBoxNode = {
+        id: +idNodeBranch,
+        quantity: 1,
+        nodeType: TypeHierarchy.BOX,
       };
+      console.log('122');
+      const dataCreateBox = await this.providerHierarchy.createNodeBox(boxData);
+      console.log('Resultado de crear BOOOOOOOX', dataCreateBox);
+      if (dataCreateBox) {
+        console.log('133');
+        const updateAlias = {
+          ...resultAlias,
+          metadata: {
+            ...resultAlias.metadata,
+            accountNumber: '987654321', //resultPts.documentNumber,
+            accountDestination: 'MAMBU1MERCHANT',
+          },
+          accountType: AccountType.MERCHANT,
+          status: StatusAlias.ACTIVE,
+          parentId: dataCreateBox.parentId,
+        };
 
-      delete updateAlias.requirementId;
-      const result = await this.associateQr(associationData.idQr, updateAlias);
-      console.log('Response...', result);
-      return {
-        status: true,
-        message: `This IdQr get association: ${associationData.idQr}`,
-      };
+        delete updateAlias.requirementId;
+        const result = await this.associateQr(
+          associationData.idQr,
+          updateAlias,
+        );
+        if (result.status) {
+          console.log('Response... ASOCIATE SERVICE:', result);
+
+          console.log('invocar a para actualizar el CN007');
+          console.log('invocar para actualizar campaing');
+          return {
+            status: true,
+            message: `This IdQr has been associated ${associationData.idQr}`,
+          };
+        } else {
+          throw new EntityDoesNotExistException(errors);
+        }
+        console.log('Response... QR ASOCIADOOO:::: ', result);
+      }
     } else {
       return {
         status: false,
@@ -167,13 +226,13 @@ export class AssociationService {
     return this.providerAias.associationQR(idQr, dataUpdate, idQr);
   }
 
-  validateAssociation(dataAlias: Alias, dataCampaing: Campaign): boolean {
-    if (
-      dataAlias.status === StatusAlias.ACTIVE &&
+  isValidAssociation(dataAlias: Alias, dataCampaing: Campaign): boolean {
+    console.log('estado alias: ', dataAlias.status);
+    console.log('estdo campaña: ', dataCampaing.status);
+    return (
+      dataAlias.status === StatusAlias.INACTIVE &&
       dataCampaing.status === StatusCampain.ACTIVE
-    ) {
-      return true;
-    }
+    );
   }
   async getAliasById(idAlias: string) {
     const resultAlias: Alias = await this.providerAias.getAliasbyId(idAlias);
