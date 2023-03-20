@@ -14,7 +14,7 @@ import { CustomException } from '@deuna/node-shared-lib';
 @Injectable()
 export class HierarchyProvider {
   constructor(private httpService: HttpService) {}
-  async getHierarchyChildrenParent(idNode: number): Promise<Hierarchy[]> {
+  /* async getHierarchyChildrenParent(idNode: number): Promise<Hierarchy[]> {
     const { data: response } = await lastValueFrom(
       this.httpService.get(
         `${process.env.bo_mc_hierarchy_service}${ENDPOINTS.HIERARCHY}/${idNode}/parents`,
@@ -22,7 +22,7 @@ export class HierarchyProvider {
     );
     return response;
   }
-
+*/
   async getNodeHierarchyByType(
     getNodeByClientId: ParamsNodeByClientId,
   ): Promise<Hierarchy[]> {
@@ -33,7 +33,6 @@ export class HierarchyProvider {
           {},
         ),
       );
-      console.log('CONSULTA DE NOMO MERCHANT: ', response);
       return response;
     } catch (e) {
       throw new CustomException(e, null);
@@ -42,7 +41,6 @@ export class HierarchyProvider {
 
   async createNodeBranch(branchNode: IBranchNode): Promise<Hierarchy> {
     try {
-      //const nodeIdbranch = res.data.createNodeHierachy.id;
       const { data: response } = await lastValueFrom(
         this.httpService.post(
           `${process.env.bo_mc_hierarchy_service}/hierarchy`,
@@ -62,7 +60,6 @@ export class HierarchyProvider {
 
   async createNodeBox(boxNode: IBoxNode): Promise<ResponseBox> {
     try {
-      //const nodeIdbranch = res.data.createNodeHierachy.id;
       const { id, quantity, nodeType } = boxNode;
       const { data: response } = await lastValueFrom(
         this.httpService.post(

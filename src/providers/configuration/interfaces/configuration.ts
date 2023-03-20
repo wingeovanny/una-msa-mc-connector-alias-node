@@ -1,4 +1,5 @@
 export class CreateConfigDto {
+  id?: string;
   configName: string;
   nodeId: string;
   configData: Record<string, unknown>;

@@ -8,25 +8,6 @@ import { endpoints } from './constants/api';
 export class ConfigurationProvider {
   constructor(private httpService: HttpService) {}
 
-  async createConfigurationBranch(
-    nodeIdBranch: string,
-    nodeIdMerchant: string,
-    campainName: string,
-  ) {
-    const configMerchant = await this.getConfigByOneNodeId(
-      +nodeIdMerchant,
-      'CN004',
-    );
-
-    const configBranchData = await this.setDataConfigBranch(
-      nodeIdBranch,
-      campainName,
-      configMerchant,
-    );
-
-    await this.createConfigurationBranchApi(configBranchData);
-  }
-
   async getConfigByOneNodeId(
     idNode: number,
     configName: string,
@@ -40,6 +21,44 @@ export class ConfigurationProvider {
     return response;
   }
 
+  async createConfigurationBranch(
+    nodeIdBranch: string,
+    nodeIdHierarchy: string,
+    campainName: string,
+  ) {
+    const configMerchant = await this.getConfigByOneNodeId(
+      +nodeIdHierarchy,
+      'CN004',
+    );
+
+    const configBranchData = await this.setDataConfigBranch(
+      nodeIdBranch,
+      campainName,
+      configMerchant,
+    );
+
+    await this.createConfigurationBranchApi(configBranchData);
+  }
+
+  async updateConfigNode(nodeIdHierarchy: string, configName: string) {
+    const configNode = await this.getConfigByOneNodeId(
+      +nodeIdHierarchy,
+      configName, //'CN007',
+    );
+
+    const numberBox = configNode.configData.hasOwnProperty('numberBox');
+    console.log('NUMERO DE CAJA ANTES DE ACTUALIZAR:::', numberBox);
+    const updatedNumberBox = +numberBox + 1;
+
+    const dataConfig = {
+      ...configNode,
+      configData: {
+        ...configNode.configData,
+        numberBox: updatedNumberBox.toString(),
+      },
+    };
+    await this.createConfigurationBranchApi(dataConfig);
+  }
   async createConfigurationBranchApi(
     createConfig: any,
   ): Promise<Configuration[]> {
@@ -81,7 +100,7 @@ export class ConfigurationProvider {
     nodeId: string,
     dataMerchant: CreateConfigDto,
   ): CreateConfigDto {
-    // delete dataMerchant.id;
+    delete dataMerchant.id;
     const dataConfig = {
       ...dataMerchant,
       nodeId: nodeId,
