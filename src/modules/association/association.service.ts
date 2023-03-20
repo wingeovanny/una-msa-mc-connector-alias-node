@@ -85,7 +85,6 @@ export class AssociationService {
     delete updateAlias.requirementId;
     const result = await this.associateQr(associationData.idQr, updateAlias);
     if (result.status) {
-      console.log('Response...', result);
       return {
         status: true,
         message: `This IdQr has been associated ${associationData.idQr}`,
@@ -100,18 +99,16 @@ export class AssociationService {
     const promiseClient = await this.getClientByRuc(
       associationData.identification,
     );
-    //consultamos info de alias y de merchant
+
     const [resultAlias, clientMerchant] = await Promise.all([
       promiseAlias,
       promiseClient,
     ]);
 
-    //consultamos info de campaña
     const resultCampaing = await this.providerCampaing.getCampainById(
       resultAlias.origin,
     );
-    console.log('Resultado campaña: ', resultCampaing);
-    //validamos que la campaña este activa
+
     if (this.isValidAssociation(resultAlias, resultCampaing)) {
       //consultamos si existe un nodo creado como sucursal de una campaña
       const hierarchyByCampain = await this.getHierachyBranchByCampain(
@@ -119,19 +116,17 @@ export class AssociationService {
         resultCampaing,
       );
       let idNodeByCampainBranch = hierarchyByCampain?.id;
-      // si no existe creamos la sucursal
       if (!hierarchyByCampain) {
         idNodeByCampainBranch = await this.createBranchByCampain(
           clientMerchant.id,
           resultCampaing,
         );
       }
-      //creamos el nodo para cada caja
+
       const dataCreateBox: ResponseBox = await this.createBoxByCampain(
         idNodeByCampainBranch,
       );
       if (dataCreateBox && dataCreateBox.status) {
-        console.log('Ingresa luego de crear BOOOOOX');
         const updateAlias = {
           ...resultAlias,
           metadata: {
@@ -152,11 +147,7 @@ export class AssociationService {
         );
 
         if (result.status) {
-          const updateData = await this.updateConfigAndCampain(
-            idNodeByCampainBranch,
-            resultCampaing,
-          );
-          console.log('AL INVOCAR A ACTUALZIAR::', updateData);
+          this.updateConfigAndCampain(idNodeByCampainBranch, resultCampaing);
           return {
             status: true,
             message: `This IdQr has been associated ${associationData.idQr}`,
@@ -223,13 +214,12 @@ export class AssociationService {
     idNodeBranchCreated = createdNodeBranch.id;
 
     //con el id del node de la sucursal creamos la configuracion de la sucursal
-    const createConfigBranch =
-      await this.providerConfiguration.createConfigurationBranch(
-        idNodeBranchCreated,
-        idNodeMerchant.id,
-        campain.name,
-      );
-    console.log('SE CREO POR FIN... ', createConfigBranch);
+    await this.providerConfiguration.createConfigurationBranch(
+      idNodeBranchCreated,
+      idNodeMerchant.id,
+      campain.name,
+    );
+
     return idNodeBranchCreated;
   }
 
@@ -246,17 +236,10 @@ export class AssociationService {
     idNodeByCampainBranch: string,
     resultCampaing: Campaign,
   ) {
-    const updateNumberBox = await this.providerConfiguration.updateConfigNode(
-      idNodeByCampainBranch,
-      'CN007',
-    );
-    console.log('invocar a para actualizar el CN007', updateNumberBox);
+    this.providerConfiguration.updateConfigNode(idNodeByCampainBranch, 'CN007');
     resultCampaing.active++;
     resultCampaing.desactive--;
-    const updateCampaing = await this.providerCampaing.updateCampaing(
-      resultCampaing,
-    );
-    console.log('invocar para actualizar campaing', updateCampaing);
+    this.providerCampaing.updateCampaing(resultCampaing);
   }
 
   associateQr(idQr: string, dataUpdate: Alias) {
@@ -264,8 +247,6 @@ export class AssociationService {
   }
 
   isValidAssociation(dataAlias: Alias, dataCampaing: Campaign): boolean {
-    console.log('estado alias: ', dataAlias.status);
-    console.log('estdo campaña: ', dataCampaing.status);
     return (
       dataAlias.status === StatusAlias.INACTIVE &&
       dataCampaing.status === StatusCampain.ACTIVE

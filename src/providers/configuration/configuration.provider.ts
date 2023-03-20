@@ -8,6 +8,24 @@ import { endpoints } from './constants/api';
 export class ConfigurationProvider {
   constructor(private httpService: HttpService) {}
 
+  async updateConfigNode(nodeIdHierarchy: string, configName: string) {
+    const configNode = await this.getConfigByOneNodeId(
+      +nodeIdHierarchy,
+      configName, //'CN007',
+    );
+
+    let numberBoxValue = configNode.configData['numberBox'] as number;
+    numberBoxValue++;
+    const dataConfig = {
+      ...configNode,
+      configData: {
+        ...configNode.configData,
+        numberBox: numberBoxValue.toString(),
+      },
+    };
+    await this.createConfigurationBranchApi(dataConfig);
+  }
+
   async getConfigByOneNodeId(
     idNode: number,
     configName: string,
@@ -40,25 +58,6 @@ export class ConfigurationProvider {
     await this.createConfigurationBranchApi(configBranchData);
   }
 
-  async updateConfigNode(nodeIdHierarchy: string, configName: string) {
-    const configNode = await this.getConfigByOneNodeId(
-      +nodeIdHierarchy,
-      configName, //'CN007',
-    );
-
-    const numberBox = configNode.configData.hasOwnProperty('numberBox');
-    console.log('NUMERO DE CAJA ANTES DE ACTUALIZAR:::', numberBox);
-    const updatedNumberBox = +numberBox + 1;
-
-    const dataConfig = {
-      ...configNode,
-      configData: {
-        ...configNode.configData,
-        numberBox: updatedNumberBox.toString(),
-      },
-    };
-    await this.createConfigurationBranchApi(dataConfig);
-  }
   async createConfigurationBranchApi(
     createConfig: any,
   ): Promise<Configuration[]> {
@@ -91,7 +90,7 @@ export class ConfigurationProvider {
       nodeId,
       configData: {
         branchName: nameBranch,
-        numberBox: '1',
+        numberBox: '0',
       },
     };
   }
