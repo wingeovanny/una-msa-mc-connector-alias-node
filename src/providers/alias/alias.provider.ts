@@ -21,7 +21,7 @@ export class AliasProvider {
     idQr: string,
     associationData: Alias,
     trackingId: string,
-  ) {
+  ): Promise<{ status: boolean; message: string }> {
     try {
       this.logger.log(`associate qr for ${idQr}, alias WS`, trackingId);
       const associationBodyData = { ...associationData };

@@ -70,31 +70,45 @@ export class AssociationService {
       promiseAlias,
       // promisePts,
     ]);
-
-    const updateAlias = {
-      ...resultAlias,
-      metadata: {
-        ...resultAlias.metadata,
-        accountNumber: '12345678', //resultPts.documentNumber,
-        accountDestination: 'MAMBU1',
-      },
-      accountType: AccountType.PERSON,
-      status: StatusAlias.ACTIVE,
-    };
-
-    delete updateAlias.requirementId;
-    const result = await this.associateQr(associationData.idQr, updateAlias);
-    if (result.status) {
-      return {
-        status: true,
-        message: `This IdQr has been associated ${associationData.idQr}`,
+    const resultCampaing = await this.providerCampaing.getCampainById(
+      resultAlias.origin,
+    );
+    if (this.isValidAssociation(resultAlias, resultCampaing)) {
+      const updateAlias = {
+        ...resultAlias,
+        metadata: {
+          ...resultAlias.metadata,
+          accountNumber: '12345678', //resultPts.documentNumber,
+          accountDestination: 'MAMBUPERSON',
+        },
+        accountType: AccountType.PERSON,
+        status: StatusAlias.ACTIVE,
       };
+
+      delete updateAlias.requirementId;
+      const result = await this.associateQr(associationData.idQr, updateAlias);
+      if (result.status) {
+        resultCampaing.active++;
+        resultCampaing.desactive--;
+        this.providerCampaing.updateCampaing(resultCampaing);
+        return {
+          status: true,
+          message: `This IdQr has been associated ${associationData.idQr}`,
+        };
+      } else {
+        throw new EntityDoesNotExistException(errors);
+      }
     } else {
-      throw new EntityDoesNotExistException(errors);
+      return {
+        status: false,
+        message: `This IdQr ${associationData.idQr} is not associated, because it is already associated or the campaign is inactive`,
+      };
     }
   }
 
-  async associateMerchantQr(associationData: AssociationQrMerchantDto) {
+  async associateMerchantQr(
+    associationData: AssociationQrMerchantDto,
+  ): Promise<{ status: boolean; message: string }> {
     const promiseAlias = await this.getAliasById(associationData.idQr);
     const promiseClient = await this.getClientByRuc(
       associationData.identification,
@@ -242,7 +256,10 @@ export class AssociationService {
     this.providerCampaing.updateCampaing(resultCampaing);
   }
 
-  associateQr(idQr: string, dataUpdate: Alias) {
+  associateQr(
+    idQr: string,
+    dataUpdate: Alias,
+  ): Promise<{ status: boolean; message: string }> {
     return this.providerAias.associationQR(idQr, dataUpdate, idQr);
   }
 
